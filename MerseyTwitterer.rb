@@ -138,10 +138,10 @@ while (1)
           # Twitter about it
           begin
             Twitter.update(message)
-          rescue Twitter::RESTError => re
-            puts Time.now.to_s+" RESTError when tweeting."
-	    puts re.code, re.message, re.uri
-            sleep 240
+          #rescue Twitter::RESTError => re
+          #  puts Time.now.to_s+" RESTError when tweeting."
+	  #  puts re.code, re.message, re.uri
+          #  sleep 240
           rescue Timeout::Error
             puts Time.now.to_s+" Timeout::Error when tweeting."
             sleep 240
@@ -180,9 +180,9 @@ while (1)
           # Twitter about it
           begin
             Twitter.update(message)
-          rescue Twitter::RESTError => re
-            puts Time.now.to_s+" RESTError when tweeting."
-            sleep 240
+          #rescue Twitter::RESTError => re
+          #  puts Time.now.to_s+" RESTError when tweeting."
+          #  sleep 240
           rescue Timeout::Error
             puts Time.now.to_s+" Timeout::Error when tweeting."
             sleep 240

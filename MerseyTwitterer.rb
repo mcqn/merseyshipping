@@ -28,6 +28,7 @@ currentShip = nil
 # How much information to dump to stdout, 0 for not much, 1 for lots
 verbose = 0
 
+# Expects the secret stuff to be in merseyshipping_keys.rb
 Twitter.configure do |config|
   config.consumer_key = TWITTER_CONSUMER_KEY
   config.consumer_secret = TWITTER_CONSUMER_SECRET
@@ -137,8 +138,6 @@ while (1)
           # Twitter about it
           begin
             Twitter.update(message)
-            #client = Twitter::Client.from_config('twitter4r.yml')
-            #new_message = client.status(:post, message)
           rescue Twitter::RESTError => re
             puts Time.now.to_s+" RESTError when tweeting."
 	    puts re.code, re.message, re.uri
@@ -181,8 +180,6 @@ while (1)
           # Twitter about it
           begin
             Twitter.update(message)
-            #client = Twitter::Client.from_config('twitter4r.yml')
-            #new_message = client.status(:post, message)
           rescue Twitter::RESTError => re
             puts Time.now.to_s+" RESTError when tweeting."
             sleep 240
@@ -230,14 +227,4 @@ while (1)
   # And wait for a bit before getting the next load of data
   sleep 120
 end
-
-# Now parse looking for extra ship info
-
-# Finally check to see if any ships are entering or leaving the river
-
-
-# Extract the coordinates from the downloaded file
-
-# Work out if this boat is "in" the river
-# See if we've seen it before, and if so was it outside
 

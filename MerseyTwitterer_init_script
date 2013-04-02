@@ -1,0 +1,18 @@
+#!/bin/bash  
+export PATH=$PATH:/usr/local/lib/site_ruby/1.8/rubygems  
+  
+case $1 in  
+  start)  
+    cd /var/rails/MerseyTwitterer
+    echo $$ > /var/run/rails/MerseyTwitterer_master.pid  
+    /var/rails/MerseyTwitterer/MerseyTwitterer.rb
+    ;;  
+  stop)  
+    kill `cat /var/run/rails/MerseyTwitterer.pid`  
+    kill `cat /var/run/rails/MerseyTwitterer_master.pid`  
+    rm -rf /var/run/rails/MerseyTwitterer*
+    ;;  
+  *)  
+    echo "usage: MerseyTwitterer_init_script {start|stop}" ;;  
+esac  
+exit 0

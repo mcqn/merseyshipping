@@ -29,11 +29,11 @@ currentShip = nil
 verbose = 0
 
 # Expects the secret stuff to be in merseyshipping_keys.rb
-Twitter.configure do |config|
+twitter_client = Twitter::REST::Client.new do |config|
   config.consumer_key = TWITTER_CONSUMER_KEY
   config.consumer_secret = TWITTER_CONSUMER_SECRET
-  config.oauth_token = TWITTER_OAUTH_KEY
-  config.oauth_token_secret = TWITTER_OAUTH_SECRET
+  config.access_token = TWITTER_OAUTH_KEY
+  config.access_token_secret = TWITTER_OAUTH_SECRET
 end
 
 while (1)
@@ -137,7 +137,7 @@ while (1)
           puts message
           # Twitter about it
           begin
-            Twitter.update(message)
+            twitter_client.update(message)
           #rescue Twitter::RESTError => re
           #  puts Time.now.to_s+" RESTError when tweeting."
 	  #  puts re.code, re.message, re.uri
@@ -179,7 +179,7 @@ while (1)
           puts message
           # Twitter about it
           begin
-            Twitter.update(message)
+            twitter_client.update(message)
           #rescue Twitter::RESTError => re
           #  puts Time.now.to_s+" RESTError when tweeting."
           #  sleep 240

@@ -5,7 +5,7 @@
 # (c) Copyright 2009-2013 MCQN Ltd.
 
 class Ship
-  attr_accessor :ship_id, :x, :y, :url, :name, :details
+  attr_accessor :ship_id, :x, :y, :url, :name, :details, :destination
 
   def initialize(ship_id)
     # id - the pcXXX id from the HTML
@@ -20,6 +20,8 @@ class Ship
     @name = "Ship"+ship_id
     # Details of the ship (usually the type of vessel)
     @details = ""
+    # Where it's headed
+    @destination = ""
   end
 
   # Check if this boat is currently in the river, or in the bay

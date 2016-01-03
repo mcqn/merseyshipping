@@ -9,9 +9,8 @@ require 'rubygems'
 require 'time'
 require 'net/http'
 require 'twitter'
-require 'merseyshipping_keys'
-require 'amc_bitly'
-require 'ship'
+require './merseyshipping_keys'
+require './ship'
 
 # Rather insecure way to get round the "can't post to Twitter" problem
 OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
@@ -36,18 +35,21 @@ twitter_client = Twitter::REST::Client.new do |config|
   config.access_token_secret = TWITTER_OAUTH_SECRET
 end
 
+log_file = nil
+unless LOG_FILE == ""
+  log_file = File.open(LOG_FILE, "a")
+end
+
 while (1)
   # Download HTML for current ship info
-  #lines = IO.readlines("ship.html")
   begin
     puts "Getting data at "+Time.now.to_s
+    run_time = Time.now
     resp = Net::HTTP.get_response("www.shipais.com", "/currentmap.php?map=mersey")
-    #lines = resp.body.split('\n')
+    lines = resp.body.split(/[\r\n]+/)
 
     # Parse it looking for ship coordinate info
-    #lines.each do |line| 
-    resp.body.each do |line|
-
+    lines.each do |line| 
       # See if it's a positional line
       matchinfo = line.match(/#(pc\d+).*left\:(\d+).*top\:(\d+).*/)
       unless matchinfo.nil?
@@ -94,6 +96,14 @@ while (1)
           puts "#{currentShip.ship_id} is a #{currentShip.details}" 
         end
       end
+      # Or the destination
+      matchinfo = line.match(/Dest.*<td><i>(.*)<\/i><\/td>/)
+      unless matchinfo.nil?
+        currentShip.destination = matchinfo[1]
+        if verbose == 1 
+          puts "#{currentShip.ship_id} is headed for #{currentShip.destination}" 
+        end
+      end
     end
   
     # Now we've got all the ship info, see if any are coming or going
@@ -101,6 +111,9 @@ while (1)
       if verbose == 1 
         puts "#{ship.ship_id}: #{ship.name} => #{ship.x}, #{ship.y} in_river? #{ship.in_river?.to_s}"
       end
+      in_river = ship.in_river? ? "in" : "out"
+      log_file.puts "#{run_time.to_i}: [#{ship.ship_id}] >>#{ship.name}<< (#{ship.x},#{ship.y}) #{in_river}" unless log_file.nil?
+      log_file.flush unless log_file.nil?
       # Find the ship in the oldShips array, if present
       old_ship = nil
       oldShips.each do |os|
@@ -120,16 +133,22 @@ while (1)
           else
             ship_details = "(#{ship.details}) "
           end
-          short_url = BitLy.shorten("http://www.shipais.com#{ship.url}")
-          message = "#{ship.name} #{ship_details}has entered the river.  See #{short_url} for current position"
-          if message.length > 140
+          short_url = "http://www.shipais.com#{ship.url}"
+          # Including a URL leaves us ~115 characters
+          available_space = 115 + short_url.length
+          heading = (ship.destination == "") ? "" : " bound for #{ship.destination}"
+          message = "#{ship.name} #{ship_details}has entered the river#{heading}.  See #{short_url} for current position"
+          if message.length > available_space
             # Try something a bit shorter
-            message = "#{ship.name} #{ship_details}entered the river.  See #{short_url}"
-            if message.length > 140
+            message = "#{ship.name} #{ship_details}entered the river#{heading}.  See #{short_url}"
+            if message.length > available_space
               # Still too long
-              message = "#{ship.name} #{ship_details}entered the river."
-              if message.length > 140
-                puts "####### That's one hell of a long ship"
+              message = "#{ship.name} #{ship_details}entered the river#{heading}."
+              if message.length > available_space
+                message = "#{ship.name} entered the river#{heading}."
+                if message.length > available_space
+                  puts "####### That's one hell of a long ship"
+                end
               end
             end
           end
@@ -138,6 +157,7 @@ while (1)
           # Twitter about it
           begin
             twitter_client.update(message)
+            log_file.puts message unless log_file.nil?
           #rescue Twitter::RESTError => re
           #  puts Time.now.to_s+" RESTError when tweeting."
 	  #  puts re.code, re.message, re.uri
@@ -163,16 +183,22 @@ while (1)
           else
             ship_details = "(#{ship.details}) "
           end
-          short_url = BitLy.shorten("http://www.shipais.com#{ship.url}")
-          message = "#{ship.name} #{ship_details}has left the river.  See #{short_url} for current position"
-          if message.length > 140
+          short_url = "http://www.shipais.com#{ship.url}"
+          # Including a URL leaves us ~115 characters
+          available_space = 115 + short_url.length
+          heading = (ship.destination == "") ? "" : " bound for #{ship.destination}"
+          message = "#{ship.name} #{ship_details}has left the river#{heading}.  See #{short_url} for current position"
+          if message.length > available_space
             # Try something a bit shorter
-            message = "#{ship.name} #{ship_details}has left the river.  See #{short_url}"
-            if message.length > 140
+            message = "#{ship.name} #{ship_details}has left the river#{heading}.  See #{short_url}"
+            if message.length > available_space
               # Still too long
-              message = "#{ship.name} #{ship_details}left the river."
-              if message.length > 140
-                puts "####### That's one hell of a long ship"
+              message = "#{ship.name} #{ship_details}left the river#{heading}."
+              if message.length > available_space
+                message = "#{ship.name} left the river#{heading}."
+                if message.length > available_space
+                  puts "####### That's one hell of a long ship"
+                end
               end
             end
           end
@@ -180,6 +206,7 @@ while (1)
           # Twitter about it
           begin
             twitter_client.update(message)
+            log_file.puts message unless log_file.nil?
           #rescue Twitter::RESTError => re
           #  puts Time.now.to_s+" RESTError when tweeting."
           #  sleep 240

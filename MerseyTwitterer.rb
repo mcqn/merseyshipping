@@ -12,12 +12,6 @@ require 'twitter'
 require 'yaml'
 require './ship'
 
-# Rather insecure way to get round the "can't post to Twitter" problem
-OpenSSL::SSL::VERIFY_PEER = OpenSSL::SSL::VERIFY_NONE
-
-# Store our PID so that init/monit can find us
-`echo "#{Process.pid}" > /var/run/rails/MerseyTwitterer.pid`
-
 # Hash of ships seen last time we checked, indexed on ship id
 newShips = Array.new
 # Hash of ships we saw the time before last, indexed on ship id
@@ -26,7 +20,44 @@ oldShips = Array.new
 currentShip = nil
 
 # Load our configuration
-settings = YAML.load_file("config.yaml")
+# Setting can either be provided through environment variables (to
+# make deployment via Docker easier) or through a YAML file.  If
+# provided in a YAML file then the name of the file MUST be provided
+# as a command line parameter to the script
+settings = {
+  "twitter" => {
+    "consumer_key" => ENV["TWITTER_CONSUMER_KEY"],
+    "consumer_secret" => ENV["TWITTER_CONSUMER_SECRET"],
+    "oauth_key" => ENV["TWITTER_OAUTH_KEY"],
+    "oauth_secret" => ENV["TWITTER_OAUTH_SECRET"]
+  },
+  "log_file" => ENV["LOG_FILE"],
+  "verbose" => false
+}
+# Environment variables come through as strings, so let's work round that
+if ENV["VERBOSE"].downcase == "true" || ENV["VERBOSE"] == "1"
+  settings["verbose"] = true
+end
+
+# See if we should override the settings from a config file
+unless ARGV.empty?
+  puts "Reading config from "+ARGV[0]
+  settings = YAML.load_file(ARGV[0])
+end
+
+# Bail if we haven't got the right settings
+misconfigured = false
+settings["twitter"].each do |k,v|
+  if v.nil?
+    misconfigured = true
+    puts "ERROR: Missing Twitter configuration setting #{k}"
+  end
+end
+if misconfigured
+  puts
+  puts "Can't continue until configured correctly"
+  exit
+end
 
 # How much information to dump to stdout, 0 for not much, 1 for lots
 verbose = settings["verbose"]

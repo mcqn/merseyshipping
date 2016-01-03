@@ -9,7 +9,7 @@ require 'rubygems'
 require 'time'
 require 'net/http'
 require 'twitter'
-require './merseyshipping_keys'
+require 'yaml'
 require './ship'
 
 # Rather insecure way to get round the "can't post to Twitter" problem
@@ -24,20 +24,24 @@ newShips = Array.new
 oldShips = Array.new
 # Current ship whose details are being populated, whilst parsing the data
 currentShip = nil
+
+# Load our configuration
+settings = YAML.load_file("config.yaml")
+
 # How much information to dump to stdout, 0 for not much, 1 for lots
-verbose = 0
+verbose = settings["verbose"]
 
 # Expects the secret stuff to be in merseyshipping_keys.rb
 twitter_client = Twitter::REST::Client.new do |config|
-  config.consumer_key = TWITTER_CONSUMER_KEY
-  config.consumer_secret = TWITTER_CONSUMER_SECRET
-  config.access_token = TWITTER_OAUTH_KEY
-  config.access_token_secret = TWITTER_OAUTH_SECRET
+  config.consumer_key = settings["twitter"]["consumer_key"]
+  config.consumer_secret = settings["twitter"]["consumer_secret"]
+  config.access_token = settings["twitter"]["oauth_key"]
+  config.access_token_secret = settings["twitter"]["oauth_secret"]
 end
 
 log_file = nil
-unless LOG_FILE == ""
-  log_file = File.open(LOG_FILE, "a")
+unless settings["log_file"].nil? || settings["log_file"] == ""
+  log_file = File.open(settings["log_file"], "a")
 end
 
 while (1)
@@ -58,7 +62,7 @@ while (1)
         ship.x = matchinfo[2]
         ship.y = matchinfo[3]
         newShips.push(ship)
-        if verbose == 1 
+        if verbose
           puts "Newship "+ship.ship_id
         end
       end
@@ -76,7 +80,7 @@ while (1)
 	  end
         end
         currentShip.url = matchinfo[2]
-        if verbose == 1 
+        if verbose 
           puts "Found #{currentShip.ship_id}.url => #{currentShip.url}"
         end
       end
@@ -84,7 +88,7 @@ while (1)
       matchinfo = line.match(/Name.*<td>(.*)<\/td>/)
       unless matchinfo.nil?
         currentShip.name = matchinfo[1]
-        if verbose == 1 
+        if verbose 
           puts "#{currentShip.ship_id} is called #{currentShip.name}"
         end
       end
@@ -92,7 +96,7 @@ while (1)
       matchinfo = line.match(/Details.*<td>(.*)<\/td>/)
       unless matchinfo.nil?
         currentShip.details = matchinfo[1]
-        if verbose == 1 
+        if verbose 
           puts "#{currentShip.ship_id} is a #{currentShip.details}" 
         end
       end
@@ -100,7 +104,7 @@ while (1)
       matchinfo = line.match(/Dest.*<td><i>(.*)<\/i><\/td>/)
       unless matchinfo.nil?
         currentShip.destination = matchinfo[1]
-        if verbose == 1 
+        if verbose 
           puts "#{currentShip.ship_id} is headed for #{currentShip.destination}" 
         end
       end
@@ -108,7 +112,7 @@ while (1)
   
     # Now we've got all the ship info, see if any are coming or going
     newShips.each do |ship|
-      if verbose == 1 
+      if verbose 
         puts "#{ship.ship_id}: #{ship.name} => #{ship.x}, #{ship.y} in_river? #{ship.in_river?.to_s}"
       end
       in_river = ship.in_river? ? "in" : "out"

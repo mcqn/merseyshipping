@@ -171,7 +171,7 @@ while (1)
           short_url = "http://www.shipais.com#{ship.url}"
           # Including a URL leaves us ~115 characters
           available_space = 115 + short_url.length
-          heading = (ship.destination == "") ? "" : " bound for #{ship.destination}"
+          heading = (ship.destination == "" || ship.destination.downcase == "unknown") ? "" : " bound for #{ship.destination}"
           message = "#{ship.name} #{ship_details}has entered the river#{heading}.  See #{short_url} for current position"
           if message.length > available_space
             # Try something a bit shorter
@@ -221,7 +221,7 @@ while (1)
           short_url = "http://www.shipais.com#{ship.url}"
           # Including a URL leaves us ~115 characters
           available_space = 115 + short_url.length
-          heading = (ship.destination == "") ? "" : " bound for #{ship.destination}"
+          heading = (ship.destination == "" || ship.destination.downcase == "unknown") ? "" : " bound for #{ship.destination}"
           message = "#{ship.name} #{ship_details}has left the river#{heading}.  See #{short_url} for current position"
           if message.length > available_space
             # Try something a bit shorter

@@ -24,3 +24,8 @@ N.B. You might need to run the docker commands with sudo, depending on your setu
  1. Edit config.env to contain your Twitter OAuth API keys
  1. Run the image
     docker run --env-file=config.env --name merseyshipping --rm -t -i mcqnltd/merseyshipping
+ 1. To run it automatically with upstart
+    sudo cp merseyshipping.conf /etc/init/
+    sudo initctl reload-configuration
+    sudo start merseyshipping
+

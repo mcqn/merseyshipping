@@ -36,3 +36,9 @@ N.B. You might need to run the docker commands with sudo, depending on your setu
     sudo initctl reload-configuration
     sudo start merseyshipping
 
+ 1. To run it automatically with systemd
+
+    sudo cp merseyshipping.service /lib/systemd/system/
+    sudo systemctl enable merseyshipping
+    sudo systemctl daemon-reload 
+    sudo service merseyshipping start
